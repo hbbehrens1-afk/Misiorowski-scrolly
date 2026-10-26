@@ -1,0 +1,142 @@
+/* ---------- Colors and fonts in one place ---------- */
+:root {
+  color-scheme: light;
+  --surface: #fcfcfb;
+  --card: #ffffff;
+  --text: #0b0b0b;
+  --text-muted: #52514e;
+  --border: #e3e2de;
+  --accent: #2a78d6;
+  --brewers-navy: #12284b;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ---------- Title screen ---------- */
+.hero {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.kicker { text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 600; margin: 0; }
+.hero h1 { font-size: clamp(2.2rem, 7vw, 4rem); line-height: 1.05; margin: 0.2em 0; color: var(--brewers-navy); }
+.dek { font-size: 1.2rem; color: var(--text-muted); }
+.scroll-hint { color: var(--text-muted); margin-top: 3rem; }
+
+/* ---------- Scrollytelling layout: chart left, steps right ---------- */
+.scrolly {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.chart {
+  flex: 1;            /* the chart fills whatever height is left after the controls */
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Plot wraps charts that have a legend in a <figure>; remove the browser's default margin */
+.chart figure { margin: 0; }
+
+.steps { padding: 30vh 0 50vh; }
+
+.step {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 70vh;
+  opacity: 0.35;
+  transition: opacity 0.3s;
+}
+.step.is-active { opacity: 1; }
+.step h2 { margin-top: 0; color: var(--brewers-navy); }
+.step:last-child { margin-bottom: 0; }
+
+/* Numbers pulled from the data */
+[data-stat] { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- Controls for the location chart ---------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.controls[hidden] { display: none; }
+.controls select { margin-left: 6px; font: inherit; padding: 4px 6px; }
+.metric-toggle { display: flex; gap: 12px; }
+
+/* ---------- Closing summary tiles ---------- */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+.tile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.tile-value { font-size: 2rem; font-weight: 700; color: var(--brewers-navy); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile-label { font-weight: 600; margin-top: 4px; }
+.tile-note { color: var(--text-muted); font-size: 0.85rem; margin-top: 2px; }
+.method-note { color: var(--text-muted); font-size: 0.85rem; }
+
+footer { max-width: 760px; margin: 0 auto; padding: 40px 16px; color: var(--text-muted); font-size: 0.85rem; }
+
+/* ---------- Narrow screens: chart stacked on top, text scrolls underneath ---------- */
+@media (max-width: 800px) {
+  .scrolly { grid-template-columns: 1fr; gap: 0; }
+
+  .sticky {
+    height: 58vh;
+    padding: 8px 0;
+    z-index: 1;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .steps { padding: 4vh 0 40vh; position: relative; z-index: 0; }
+  .step { margin-bottom: 45vh; }
+
+  /* Two small tiles per row so all six fit in the chart area */
+  .tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { padding: 8px 10px; }
+  .tile-value { font-size: 1.3rem; }
+  .tile-label { font-size: 0.8rem; }
+  .tile-note { display: none; }
+}

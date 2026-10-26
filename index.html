@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Misiorowski by the Pitch</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Title screen. Numbers in <span data-stat="..."> are filled in from the CSV by main.js -->
+  <header class="hero">
+    <p class="kicker">A Statcast story</p>
+    <h1>Misiorowski by the Pitch</h1>
+    <p class="dek">
+      Every one of the <span data-stat="pitches"></span> pitches Jacob Misiorowski threw
+      across <span data-stat="games"></span> regular-season games,
+      <span data-stat="dateRange"></span>.
+    </p>
+    <p class="scroll-hint">Scroll ↓</p>
+  </header>
+
+  <main class="scrolly">
+    <!-- The chart stays in place while the steps scroll past -->
+    <figure class="sticky">
+      <!-- Controls only appear for the interactive location chart -->
+      <div id="controls" class="controls" hidden>
+        <label>
+          Pitch type
+          <select id="pitch-filter"></select>
+        </label>
+        <div class="metric-toggle" role="radiogroup" aria-label="Metric">
+          <label><input type="radio" name="metric" value="strike" checked> Strike rate</label>
+          <label><input type="radio" name="metric" value="whiff"> Whiff rate</label>
+        </div>
+      </div>
+      <div id="chart" class="chart"></div>
+    </figure>
+
+    <article class="steps">
+      <!-- data-chart tells main.js which chart to draw when this step is reached -->
+
+      <!-- Section 1: Intro -->
+      <section class="step" data-chart="usage">
+        <h2>Who is Jacob Misiorowski?</h2>
+        <p>
+          Misiorowski is a <span data-stat="throws"></span>-handed pitcher for the
+          <span data-stat="team"></span>. This data covers his
+          <span data-stat="seasons"></span> seasons: <span data-stat="pitches"></span> pitches
+          in <span data-stat="games"></span> games.
+        </p>
+        <p>
+          He throws five pitches, but one dominates: the four-seam fastball makes up
+          <span data-stat="ffShare"></span> of everything he throws.
+        </p>
+      </section>
+
+      <!-- Section 2: Velocity -->
+      <section class="step" data-chart="velo">
+        <h2>Velocity</h2>
+        <p>
+          Each tick is one pitch; the circle marks the average for that pitch type.
+          His slowest pitch, the <span data-stat="slowestName"></span>, averages
+          <span data-stat="slowestMean"></span> mph.
+        </p>
+      </section>
+
+      <section class="step" data-chart="velo-ff">
+        <p>
+          The fastball is the headline. It averages <span data-stat="ffMean"></span> mph,
+          topped out at <span data-stat="ffMax"></span> mph, and
+          <span data-stat="ff100"></span> of his fastballs reached 100 mph or more.
+        </p>
+        <p>
+          That's a gap of <span data-stat="veloGap"></span> mph between his fastest
+          and slowest pitch types, on average.
+        </p>
+      </section>
+
+      <!-- Section 3: Arsenal (movement) -->
+      <section class="step" data-chart="movement">
+        <h2>Arsenal: how his pitches move</h2>
+        <p>
+          Each small dot is one pitch, placed by how far its spin pushed it sideways and up or
+          down compared with a pitch thrown with no spin. The large circles are each pitch
+          type's average. Hover or tap one for its spin rate.
+        </p>
+        <p>
+          The five pitch types form separate clusters. His changeup runs the most to his arm
+          side, <span data-stat="chArm"></span> inches on average.
+        </p>
+      </section>
+
+      <section class="step" data-chart="movement-ff-cu">
+        <p>
+          The fastball and curveball sit at opposite ends. The fastball carries
+          <span data-stat="ffIVB"></span> inches of "rise" compared with a spinless pitch,
+          while the curveball drops <span data-stat="cuIVB"></span> inches.
+        </p>
+        <p>
+          That's a <span data-stat="ffCuGap"></span>-inch difference in vertical movement,
+          on top of the <span data-stat="veloGap"></span> mph speed gap from the last section.
+        </p>
+      </section>
+
+      <!-- Section 4: Location -->
+      <section class="step" data-chart="heat-original">
+        <h2>Location: where does he throw strikes?</h2>
+        <p>
+          This is the first version of this chart. It splits the plate into
+          <span data-stat="origBins"></span> tiny 0.05 ft squares.
+          <span data-stat="origSmall"></span> of them hold only one or two pitches, and
+          <span data-stat="origExtreme"></span> show either exactly 0% or 100%. The square shape also stretches a 4 × 5 ft area out of proportion.
+        </p>
+        <p><a href="original.html">Open the original version on its own page →</a></p>
+      </section>
+
+      <section class="step" data-chart="heat" data-metric="strike">
+        <p>
+          The fixed version uses <span data-stat="binSize"></span> ft squares, hides squares
+          with fewer than <span data-stat="minPitches"></span> pitches, and keeps feet the
+          same size on both axes. Balls put in play now count as strikes too.
+        </p>
+        <p>
+          Inside the strike zone, <span data-stat="inZoneStrike"></span> of his pitches end
+          up as strikes; outside it, <span data-stat="outZoneStrike"></span> still do.
+        </p>
+      </section>
+
+      <section class="step" data-chart="heat" data-metric="whiff">
+        <p>
+          Switch to <strong>whiff rate</strong>: of the swings at pitches in each square,
+          how many missed? Overall, hitters whiffed on
+          <span data-stat="whiffRate"></span> of their swings against him.
+        </p>
+        <p>
+          Use the pitch-type menu above the chart to compare his pitches. Hover or tap a
+          square for its numbers.
+        </p>
+      </section>
+
+      <!-- Section 5: Count strategy -->
+      <section class="step" data-chart="count-state">
+        <h2>Count strategy: ahead vs. behind</h2>
+        <p>
+          "Ahead" means more strikes than balls in the count; "behind" means more balls.
+          When he falls behind, he leans on the fastball: <span data-stat="ffBehind"></span>
+          of his pitches, compared with <span data-stat="ffAhead"></span> when he's ahead.
+        </p>
+        <p>
+          The curveball shows the biggest swing. It's <span data-stat="cuAhead"></span> of
+          his pitches when ahead but only <span data-stat="cuBehind"></span> when behind.
+        </p>
+      </section>
+
+      <section class="step" data-chart="count-detail">
+        <p>
+          Here is every count. In <span data-stat="n30"></span> pitches on 3-0, he threw the
+          fastball <span data-stat="ff30"></span> of the time.
+        </p>
+        <p>
+          The numbers in parentheses show how many pitches each bar is based on, so treat the
+          rare counts with some caution. Hover or tap a segment for details.
+        </p>
+      </section>
+
+      <!-- Section 6: Putting hitters away -->
+      <section class="step" data-chart="zone-whiff">
+        <h2>Putting hitters away</h2>
+        <p>
+          With two strikes, hitters swung <span data-stat="ts2Swings"></span> times against him
+          and missed <span data-stat="ts2Whiff"></span> of the time. This grid is the strike
+          zone seen from the catcher, plus the four areas just outside it. Gray squares had
+          fewer than 5 swings.
+        </p>
+        <p>
+          The misses come from outside the zone: hitters whiffed on
+          <span data-stat="ts2Out"></span> of two-strike swings at pitches out of the zone,
+          compared with <span data-stat="ts2In"></span> inside it.
+        </p>
+      </section>
+
+      <section class="step" data-chart="zone-whiff-pitch">
+        <p>
+          Split by pitch, the fastball and curveball work different areas. The fastball's best
+          two-strike spot is <span data-stat="ffBestWhere"></span>:
+          <span data-stat="ffBestRate"></span> whiffs on <span data-stat="ffBestSwings"></span> swings.
+        </p>
+        <p>
+          The curveball's is <span data-stat="cuBestWhere"></span>:
+          <span data-stat="cuBestRate"></span> whiffs on <span data-stat="cuBestSwings"></span> swings.
+        </p>
+      </section>
+
+      <!-- Section 7: Closing summary -->
+      <section class="step" data-chart="summary">
+        <h2>The takeaway</h2>
+        <p>
+          Misiorowski's approach starts with velocity. His fastball averages
+          <span data-stat="ffMean"></span> mph, and he throws it <span data-stat="ffShare"></span>
+          of the time, more often when he's behind in the count.
+        </p>
+        <p>
+          The curveball gives hitters a second look that moves the opposite way, and with two
+          strikes, both pitches do their damage outside the zone, where hitters whiffed on
+          <span data-stat="ts2Out"></span> of their swings.
+        </p>
+        <p class="method-note">
+          All numbers come from a Baseball Savant export of his <span data-stat="pitches"></span>
+          regular-season pitches (<span data-stat="dateRange"></span>).
+        </p>
+      </section>
+    </article>
+  </main>
+
+  <footer>
+    <p>Data: Baseball Savant (Statcast) pitch-by-pitch export. Built with Observable Plot, d3 and Scrollama.</p>
+  </footer>
+
+  <!-- Libraries from a CDN (pinned versions) -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.16/dist/plot.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/scrollama@3.2.0/build/scrollama.min.js"></script>
+
+  <!-- Our code, in load order -->
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

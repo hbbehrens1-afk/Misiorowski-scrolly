@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Original Heatmap</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px 16px; background: #fff; color: #222; }
+    #status { color: #555; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Strike rate by pitch location (original notebook version)</h1>
+  <p id="status">Loading data…</p>
+  <div id="chart"></div>
+
+  <!-- Libraries from a CDN (pinned versions) -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.16/dist/plot.umd.min.js"></script>
+
+  <script src="js/original.js"></script>
+</body>
+</html>
