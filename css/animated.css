@@ -111,7 +111,7 @@ body.bv-lock { overflow: hidden; }
 .seq-ticks { display: flex; justify-content: space-between; }
 
 /* ---------- Chart pieces ---------- */
-.dot { stroke: none; transition: opacity 0.25s; }
+.dot { stroke: none; transition: opacity 0.25s; pointer-events: none; }   /* hover uses the overlay (nearest dot), so dots never block the boxes and bars underneath */
 .mark { transition: opacity 0.25s; }
 .anno { transition: opacity 0.25s; }
 .axis { color: var(--text-muted); font-size: 11px; }
