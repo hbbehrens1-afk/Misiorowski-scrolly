@@ -103,3 +103,30 @@ button:active { transform: translateY(1px); }
   #field { height: min(52vh, 110vw); }   /* leave room for the touch buttons */
   .game-dek { font-size: 0.85rem; }
 }
+
+/* ---------- Pitch call (before each pitch) ---------- */
+.pitch-call {
+  position: absolute;
+  left: 50%; top: 12%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: rgba(12, 20, 34, 0.85);
+  border-radius: 10px;
+  padding: 10px 22px;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 94%;
+  pointer-events: none;
+}
+.pitch-call[hidden] { display: none; }
+.pitch-call-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #c3c2b7; }
+.pitch-call-name { font-size: clamp(1.3rem, 4.5vw, 2rem); font-weight: 800; }
+.pitch-call-prompt { font-size: 0.9rem; color: #9ec5f4; }
+.pitch-call.thrown { opacity: 0.55; padding: 6px 16px; }
+.pitch-call.thrown .pitch-call-prompt { display: none; }
+
+/* ---------- Pitch speed slider ---------- */
+.speed-control { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 0.9rem; }
+.speed-control label { font-weight: 700; }
+.speed-control input { flex: 1; max-width: 320px; accent-color: #ffd60a; }
+.speed-control output { font-variant-numeric: tabular-nums; color: #c3c2b7; min-width: 9em; }

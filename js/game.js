@@ -4,13 +4,14 @@
 import * as THREE from "three";
 import { S, MOUND_Y, MOUND_H, buildPark, buildPitcher, buildBatter, buildBat, buildBall } from "./game-scene.js";
 import { FRONT_OF_PLATE, CONTACT_DELAY, SWEET_RADIUS, preparePitch, pitchAt, judgeSwing,
-  simulateHit, directionWord, battedType } from "./game-physics.js";
+  simulateHit, directionWord, battedType } from "./game-physics.js?v=2";
 import { RELEASE_U, releasePose, setPose, deliveryPose, mixPose, applyPose } from "./game-poses.js";
 
 const WINDUP = 1.45;               // seconds for the whole delivery
 const RELEASE_AT = WINDUP * RELEASE_U;
 const SWING_TIME = 0.32;           // seconds for the whole swing animation
-const RESULT_PAUSE = 3.2;          // seconds to show a result before the next pitch (time to settle in)
+const RESULT_PAUSE = 2.4;          // seconds to show a result before the next pitch is announced
+const HR_SHARE = 0.7;              // share of balls put in play that become home runs
 const BALL_R = 0.121;
 const ZONE_HALF = 0.83;
 const color = d3.scaleOrdinal(PITCH_NAMES, PITCH_COLORS);   // same colors as the story
@@ -21,6 +22,23 @@ const messageEl = document.querySelector("#message");
 const infoEl = document.querySelector("#pitch-info");
 const startEl = document.querySelector("#start");
 const startBtn = document.querySelector("#start-btn");
+const callEl = document.querySelector("#pitch-call");
+const callNameEl = document.querySelector("#pitch-call-name");
+const callPromptEl = document.querySelector("#pitch-call-prompt");
+const touchBtn = document.querySelector("#btn-swing");
+const speedEl = document.querySelector("#speed");
+const speedOutEl = document.querySelector("#speed-out");
+const isTouch = window.matchMedia("(hover: none)").matches;
+
+// Pitch speed slider: 100% = real time. Slows the delivery, the pitch and the swing together,
+// so timing still works the same way, just with more time to react.
+let speed = 0.6;
+function updateSpeed() {
+  speed = Number(speedEl.value) / 100;
+  speedOutEl.textContent = speed === 1 ? "100% (real speed)" : `${Math.round(speed * 100)}%`;
+}
+speedEl.addEventListener("input", updateSpeed);
+updateSpeed();
 
 // ---------- three.js setup ----------
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -165,7 +183,7 @@ const game = {
   balls: 0, strikes: 0, hits: 0, homers: 0, ks: 0, walks: 0, longest: 0,
   abPitch: 0,              // pitches so far in this at-bat (numbers the pitch marks)
   abOver: false,           // the last pitch ended the at-bat
-  phase: "start",          // start → pitch → (hit) → result → pitch …
+  phase: "start",          // start → ready → pitch → (hit) → result → ready …
   clock: 0,                // seconds since this phase began
   pitch: null,             // the real pitch being thrown
   swing: null,             // { start: clock time, at: seconds after release }
@@ -181,16 +199,18 @@ function choosePitch() {
   return preparePitch(list[Math.floor(Math.random() * list.length)]);
 }
 
-function startPitch() {
+// Pick the next pitch and announce it. It's thrown when the player presses Space.
+function readyPitch() {
   if (game.abOver) { fadeOldMarks(); game.abPitch = 0; game.abOver = false; }   // new at-bat
   game.pitch = choosePitch();
   game.swing = null;
   game.verdict = null;
   game.hit = null;
-  game.phase = "pitch";
+  game.phase = "ready";
   game.clock = 0;
   trailPts.length = 0;
   hideMessage();
+  showPitchCall(game.pitch);
 
   // Shift the pitcher so his hand at release lands exactly on this pitch's real release point
   pitcherOffset.set(0, 0, 0);
@@ -200,6 +220,14 @@ function startPitch() {
   const r = pitchAt(game.pitch, 0);
   pitcherOffset.copy(S(r.x, r.y, r.z)).sub(hand);
   pitcherOffset.y = Math.max(-0.6, Math.min(0.6, pitcherOffset.y));
+}
+
+function throwPitch() {
+  if (game.phase !== "ready") return;
+  game.phase = "pitch";
+  game.clock = 0;
+  callEl.classList.add("thrown");
+  touchBtn.textContent = "Swing";
 }
 
 function swing() {
@@ -212,7 +240,14 @@ function swing() {
 function resolvePitch() {
   const p = game.pitch, v = game.verdict;
   if (v?.hit) {
-    game.hit = simulateHit({ x: p.plate_x, y: FRONT_OF_PLATE, z: p.plate_z }, v);
+    const start = { x: p.plate_x, y: FRONT_OF_PLATE, z: p.plate_z };
+    game.hit = simulateHit(start, v);
+    // About 70% of contact leaves the park; the rest play out as hit (minus any home runs)
+    if (Math.random() < HR_SHARE) forceHomeRun(start, v);
+    else if (game.hit.kind === "hr") {
+      v.la = Math.min(v.la, 16);
+      game.hit = simulateHit(start, v);
+    }
     game.phase = "hit";
     game.clock = 0;
     return;
@@ -221,6 +256,21 @@ function resolvePitch() {
   const inZone = Math.abs(p.plate_x) <= ZONE_HALF && p.plate_z >= p.sz_bot && p.plate_z <= p.sz_top;
   if (inZone) finish("strike", "Called strike", "it caught the zone");
   else finish("ball", "Ball", "outside the zone");
+}
+
+// Turn this contact into a home run: hard contact at a good launch angle, kept fair
+function forceHomeRun(start, v) {
+  const spray = Math.max(-36, Math.min(36, v.spray));
+  for (let i = 0; i < 10; i++) {
+    const ev = Math.min(118, 104 + Math.random() * 8 + i * 1.5);
+    const la = 24 + Math.random() * 10;
+    const hit = simulateHit(start, { ev, la, spray });
+    if (hit.kind === "hr") {
+      Object.assign(v, { ev, la, spray });
+      game.hit = hit;
+      return;
+    }
+  }
 }
 
 // The batted ball has finished its flight
@@ -265,6 +315,7 @@ function finish(kind, text, detail) {
   updateScoreboard();
   game.phase = "result";
   game.clock = 0;
+  callEl.hidden = true;
 }
 
 function resetCount() { game.balls = 0; game.strikes = 0; game.abOver = true; }
@@ -278,6 +329,17 @@ function showMessage(text, detail, kind) {
   messageEl.classList.add("show");
 }
 function hideMessage() { messageEl.classList.remove("show"); }
+
+function showPitchCall(p) {
+  const swatch = document.createElement("span");
+  swatch.className = "swatch";
+  swatch.style.cssText = `display:inline-block;width:0.6em;height:0.6em;border-radius:50%;margin-right:0.3em;background:${color(p.pitch_name)}`;
+  callNameEl.replaceChildren(swatch, p.pitch_name);
+  callPromptEl.textContent = isTouch ? "Tap Ready when you're set" : "Press Space when you're ready";
+  callEl.classList.remove("thrown");
+  callEl.hidden = false;
+  touchBtn.textContent = "Ready";
+}
 
 const fmtDate = d3.utcFormat("%b %-d, %Y");
 function showPitchInfo(p) {
@@ -362,13 +424,17 @@ const clock = new THREE.Clock();
 const camGoal = new THREE.Vector3(), lookGoal = new THREE.Vector3();
 
 function frame() {
-  const dt = Math.min(0.05, clock.getDelta());
+  const realDt = Math.min(0.05, clock.getDelta());
+  // The slider slows the pitch and swing; result pauses and the camera run in real time
+  // (the windup stays at normal speed; slowing starts just before he lets go)
+  const slow = game.phase === "pitch" && game.clock >= RELEASE_AT - 0.15;
+  const dt = slow ? realDt * speed : realDt;
   game.clock += dt;
   const p = game.pitch;
 
   // Aiming circle glides toward the pointer
-  aim.x += (aimTarget.x - aim.x) * ease(30, dt);
-  aim.z += (aimTarget.z - aim.z) * ease(30, dt);
+  aim.x += (aimTarget.x - aim.x) * ease(30, realDt);
+  aim.z += (aimTarget.z - aim.z) * ease(30, realDt);
   reticle.position.copy(S(aim.x, FRONT_OF_PLATE - 0.05, aim.z));
 
   // Pitcher: deliver the pitch, then ease back to the set position while the result shows
@@ -440,7 +506,7 @@ function frame() {
   reticle.visible = game.phase !== "start";
 
   // Next pitch after the pause
-  if (game.phase === "result" && game.clock >= RESULT_PAUSE) startPitch();
+  if (game.phase === "result" && game.clock >= RESULT_PAUSE) readyPitch();
 
   renderer.render(scene, camera);
 }
@@ -456,7 +522,7 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 
-// ---------- Controls: mouse (or finger) aims, click (or Swing button) swings ----------
+// ---------- Controls: Space (or Ready) throws the pitch; mouse (or finger) aims, click (or Swing) swings ----------
 const raycaster = new THREE.Raycaster();
 const platePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), FRONT_OF_PLATE);  // three.js z = -17/12
 const hitPoint = new THREE.Vector3();
@@ -474,7 +540,7 @@ function aimAt(event) {
 function start() {
   if (game.phase !== "start" || !pool.length) return;
   startEl.hidden = true;
-  startPitch();
+  readyPitch();
 }
 
 canvas.addEventListener("pointermove", aimAt);
@@ -487,12 +553,15 @@ canvas.addEventListener("pointerdown", e => {
 window.addEventListener("keydown", e => {
   if (e.code !== "Space") return;
   e.preventDefault();
-  if (game.phase === "start") start(); else swing();
+  if (game.phase === "start") start();
+  else if (game.phase === "ready") throwPitch();
 });
 startBtn.addEventListener("click", start);
-document.querySelector("#btn-swing").addEventListener("pointerdown", e => {
+touchBtn.addEventListener("pointerdown", e => {
   e.preventDefault();
-  if (game.phase === "start") start(); else swing();
+  if (game.phase === "start") start();
+  else if (game.phase === "ready") throwPitch();
+  else swing();
 });
 
 // ---------- Start ----------

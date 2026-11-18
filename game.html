@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Face Misiorowski</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/game.css">
+  <link rel="stylesheet" href="css/game.css?v=2">
 </head>
 <body class="game-page">
   <!-- DRAFT: batting game. Every pitch is a real pitch from savant_data.csv, played back at
@@ -14,9 +14,9 @@
     <a href="index.html" class="back-link">← Back to the story</a>
     <h1>Face Misiorowski</h1>
     <p class="game-dek">
-      Each pitch is one he really threw, at its real speed, movement and release point, picked
-      from pitches he threw in the same count. Aim where the ball will cross the plate, then time
-      your swing.
+      Each pitch is one he really threw, with its real movement and release point, picked from
+      pitches he threw in the same count. You'll be told what's coming. Use what you learned in
+      the story to guess where it will cross the plate, then time your swing.
     </p>
   </header>
 
@@ -39,19 +39,34 @@
         </div>
       </div>
 
+      <!-- What's coming next, shown before each pitch -->
+      <div id="pitch-call" class="pitch-call" aria-live="polite" hidden>
+        <span class="pitch-call-label">Next pitch</span>
+        <span id="pitch-call-name" class="pitch-call-name"></span>
+        <span id="pitch-call-prompt" class="pitch-call-prompt"></span>
+      </div>
+
       <!-- Big result text, e.g. "Home run · 412 ft" -->
       <div id="message" class="message" aria-live="assertive"></div>
 
       <!-- Start screen -->
       <div id="start" class="start-card">
         <h2>Step in the box</h2>
-        <p class="desktop-only">Move the <strong>mouse</strong> to aim the yellow circle where the ball will cross the plate</p>
-        <p class="desktop-only"><strong>Click</strong> (or press <kbd>Space</kbd>) to swing</p>
-        <p class="touch-only">Drag on the field to aim, then tap <strong>Swing</strong></p>
-        <p class="hint">Aim a little under the ball to lift it. Swing early to pull it to left field.</p>
+        <p>Before each pitch you'll see what he's throwing.</p>
+        <p class="desktop-only">Press <kbd>Space</kbd> when you're ready for the pitch</p>
+        <p class="desktop-only">Move the <strong>mouse</strong> to aim the yellow circle, <strong>click</strong> to swing</p>
+        <p class="touch-only">Tap <strong>Ready</strong>, drag on the field to aim, then tap <strong>Swing</strong></p>
+        <p class="hint">Fastballs ride high, curveballs drop. Aim where it will end up, not where it starts.</p>
         <button id="start-btn" type="button">Play ball</button>
         <p id="loading" class="hint">Loading pitches…</p>
       </div>
+    </div>
+
+    <!-- Pitch speed: slows the whole pitch down so it's easier to follow -->
+    <div class="speed-control">
+      <label for="speed">Pitch speed</label>
+      <input id="speed" type="range" min="30" max="100" step="5" value="60">
+      <output id="speed-out" for="speed">60%</output>
     </div>
 
     <!-- What the last pitch was -->
@@ -59,7 +74,7 @@
 
     <!-- Touch control for phones -->
     <div class="touch-controls">
-      <button id="btn-swing" type="button" class="swing">Swing</button>
+      <button id="btn-swing" type="button" class="swing">Ready</button>
     </div>
   </main>
 
@@ -69,6 +84,6 @@
   <script type="importmap">
     { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
   </script>
-  <script type="module" src="js/game.js"></script>
+  <script type="module" src="js/game.js?v=3"></script>
 </body>
 </html>

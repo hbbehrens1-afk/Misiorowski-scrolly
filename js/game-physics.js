@@ -43,7 +43,7 @@ export function pitchAt(p, e) {
 // ---------- Swing contact ----------
 
 export const CONTACT_DELAY = 0.12;   // s from click until the bat is over the plate
-export const SWEET_RADIUS = 0.55;    // ft: how far the aim can be from the ball and still hit it
+export const SWEET_RADIUS = 0.8;     // ft: how far the aim can be from the ball and still hit it (bigger = easier)
 const TIMING_WINDOW = 0.12;          // s: how early or late you can be and still hit it
 
 const jitter = size => (Math.random() - 0.5) * 2 * size;

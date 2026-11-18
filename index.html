@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Misiorowski by the Pitch (Animated)</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/animated.css?v=4">
+  <link rel="stylesheet" href="css/animated.css?v=5">
 </head>
 <body>
 
@@ -19,9 +19,6 @@
       across <span data-stat="games"></span> regular-season games,
       <span data-stat="dateRange"></span>. Each dot is one pitch, and it keeps its color
       the whole way down.
-    </p>
-    <p class="hero-links">
-      <a href="game.html">Step in the box: try to hit his pitches →</a>
     </p>
     <p class="scroll-hint">Scroll ↓</p>
   </header>
@@ -263,7 +260,12 @@
           strikes, both pitches do their damage outside the zone, where hitters whiffed on
           <span data-stat="ts2Out"></span> of their swings.
         </p>
-        <p><a href="game.html">Think you can hit him? Try the batting game →</a></p>
+        <div class="game-cta">
+          <h3>Now step in the box</h3>
+          <p>You've seen what he throws, how it moves and where it goes. Before each pitch you'll
+            be told what's coming. Use what you learned to guess where it will cross the plate.</p>
+          <p><a class="game-cta-btn" href="game.html">Play the batting game →</a></p>
+        </div>
         <p class="method-note">
           All numbers come from a Baseball Savant export of his <span data-stat="pitches"></span>
           regular-season pitches (<span data-stat="dateRange"></span>).
