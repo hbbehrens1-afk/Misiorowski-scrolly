@@ -32,14 +32,14 @@ If port 8000 is busy, use 8001. If a change doesn't show up, hard refresh with C
 
 | File | What it does |
 |---|---|
-| `index.html` | The story page: text steps + sticky chart |
+| `static.html` | The original (non-animated) story page: text steps + sticky chart |
 | `original.html`, `js/original.js` | Original notebook heatmap, kept for comparison |
 | `css/style.css` | Layout (chart left / text right; stacked on phones) |
 | `js/data.js` | Loads + cleans the CSV, strike/swing/whiff flags, binning |
 | `js/charts.js` | One function per chart |
 | `js/main.js` | Computes text stats, controls, Scrollama wiring |
 | `data/savant_data.csv` | Copy of the Baseball Savant export (read-only) |
-| `animated.html`, `js/animated.js`, `css/animated.css` | DRAFT (not on GitHub yet): animated d3 version of the story |
+| `index.html`, `js/animated.js`, `css/animated.css` | The animated d3 version of the story (home page) |
 | `game.html`, `js/game*.js`, `css/game.css` | DRAFT (not on GitHub yet): 3D batting game (three.js) with real pitches at real speed and batted-ball physics |
 | `PLOT_CODE.md` | Every chart's code in story order, with how each is called |
 | `OBSERVABLE_CELLS.md` | The same charts as paste-in cells for an Observable notebook |

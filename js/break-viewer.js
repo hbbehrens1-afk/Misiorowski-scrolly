@@ -1,4 +1,4 @@
-// break-viewer.js — 3D pitch-break viewer in the movement step of animated.html.
+// break-viewer.js — 3D pitch-break viewer in the movement step of index.html.
 // Pick a pitch type and watch one real pitch of that type fly from his hand to the catcher.
 // The solid line is its real path; the dashed line is the same throw with no spin (gravity
 // and drag only), so the gap between them is the break. Reuses the game's pitch physics.

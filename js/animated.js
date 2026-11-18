@@ -1,4 +1,4 @@
-// animated.js — the animated version of the story (animated.html).
+// animated.js — the animated version of the story (index.html).
 // One SVG stays on screen the whole time. Every pitch is a dot that keeps its
 // pitch-type color, and each scroll step moves the dots (and fades bars and cells
 // in and out) with d3 transitions, instead of drawing a brand-new chart.
