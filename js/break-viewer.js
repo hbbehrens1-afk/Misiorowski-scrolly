@@ -2,11 +2,12 @@
 // Pick a pitch type and watch one real pitch of that type fly from his hand to the catcher.
 // The solid line is its real path; the dashed line is the same throw with no spin (gravity
 // and drag only), so the gap between them is the break. Reuses the game's pitch physics.
-// Overlay mode throws two pitch types at once, both aimed at the middle of the zone, so the
-// gap where they cross the plate comes only from their different speed and spin.
+// Every pitch ends where that pitch type really crosses the plate on average (one at a time or
+// two in overlay mode), so a pitch type always ends in the same, realistic spot. The dashed
+// no-spin line shows where the same throw would go without spin: the gap is the break.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { S, MOUND_Y, MOUND_H, buildBall } from "./game-scene.js";
+import { S, MOUND_Y, MOUND_H, buildBall, buildBatter, buildBat } from "./game-scene.js";
 import { FRONT_OF_PLATE, preparePitch, pitchAt } from "./game-physics.js";
 
 const GRAVITY = 32.17;
@@ -79,9 +80,57 @@ catcher.add(body, head, mitt);
 catcher.position.copy(S(0, -2.6, 0));
 scene.add(catcher);
 
-// Strike zone outline at the front of the plate (set once the data loads)
-const zoneLine = new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffffff }));
-scene.add(zoneLine);
+// Batter (only in the batter's view): the same right-handed hitter, stance and bat as the game
+const batter = buildBatter();
+batter.root.position.copy(S(-2.9, 0.4, 0));
+batter.root.rotation.y = Math.PI / 2;                    // facing the plate
+batter.hips.position.y = 3.5 * 6.1 / 6.6 - 0.35;         // slight crouch
+batter.torso.rotation.x = 0.3;
+for (const [hip, knee, z] of [[batter.rHip, batter.rKnee, -0.25], [batter.lHip, batter.lKnee, 0.25]]) {
+  hip.rotation.set(-0.25, 0, z);
+  knee.rotation.x = 0.5;
+}
+const bat = buildBat();
+const HANDS = S(-2.35, 0.1, 3.9), BAT_DIR = S(-0.25, -0.45, 0.86).normalize();
+bat.position.copy(HANDS);
+bat.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), BAT_DIR);
+scene.add(batter.root, bat);
+batter.root.updateMatrixWorld(true);
+for (const [sh, target] of [[batter.lSh, HANDS], [batter.rSh, HANDS.clone().addScaledVector(BAT_DIR, 0.3)]]) {
+  const from = sh.getWorldPosition(new THREE.Vector3());
+  const local = target.clone().sub(from).applyQuaternion(sh.parent.getWorldQuaternion(new THREE.Quaternion()).invert());
+  sh.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), local.normalize());
+}
+// Strike zone in every view: the same white frame and faint 3×3 grid as the game, drawn on
+// top of everything so the batter or catcher never hides it (built once the data loads)
+const batterZone = new THREE.Group();
+scene.add(batterZone);
+function buildBatterZone(top, bot) {
+  const HALF = 0.83, flat = o => new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: o, depthTest: false, side: THREE.DoubleSide });
+  const bar = (x0, z0, x1, z1, w, o) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(Math.hypot(x1 - x0, z1 - z0) + w, w), flat(o));
+    m.position.copy(S((x0 + x1) / 2, FRONT_OF_PLATE, (z0 + z1) / 2));
+    m.rotation.z = Math.atan2(z1 - z0, x1 - x0);
+    m.renderOrder = 10;
+    batterZone.add(m);
+  };
+  const h = (top - bot) / 3, w = (2 * HALF) / 3;
+  for (const i of [1, 2]) {
+    bar(-HALF + i * w, bot, -HALF + i * w, top, 0.015, 0.35);   // grid lines
+    bar(-HALF, bot + i * h, HALF, bot + i * h, 0.015, 0.35);
+  }
+  bar(-HALF, bot, HALF, bot, 0.04, 0.95);                       // outer frame
+  bar(-HALF, top, HALF, top, 0.04, 0.95);
+  bar(-HALF, bot, -HALF, top, 0.04, 0.95);
+  bar(HALF, bot, HALF, top, 0.04, 0.95);
+}
+
+function showBatter(on) {
+  batter.root.visible = bat.visible = on;
+  catcher.visible = !on;                                  // the game has no catcher in the way
+}
+
+showBatter(false);
 
 
 // ---------- Balls and paths ----------
@@ -109,11 +158,14 @@ const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 500);
 // Two fixed views. Statcast measures left/right from the catcher's side, so in the catcher's view
 // a right-hander releases on your LEFT. The TV view (from center field) is the mirror image.
 const VIEWS = {
-  catcher: { pos: S(0, -11, 6.2), target: S(0, 25, 2.6), fov: 35,
+  catcher: { pos: S(0, -11, 6.2), target: S(0, 25, -0.4), fov: 35,
     label: "Catcher's view: a right-hander releases on your left" },
   // Like a broadcast camera: far behind the mound with a zoomed-in (telephoto) lens
   tv: { pos: S(0, 115, 13), target: S(0, 4, 3.4), fov: 7,
-    label: "TV view (behind the pitcher): his arm is on your right" }
+    label: "TV view (behind the pitcher): his arm is on your right" },
+  // Exactly the camera from the batting game: behind and above a right-handed hitter
+  batter: { pos: S(-0.7, -13, 5.8), target: S(0, 30, 1.8), fov: 40, batter: true,
+    label: "Batter's view: what a right-handed hitter sees (same as the game)" }
 };
 const viewLabel = document.querySelector("#bv-view-label");
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -122,6 +174,7 @@ controls.enablePan = false;           // no damping, so the view buttons land ex
 function setView(name) {
   const v = VIEWS[name];
   camera.position.copy(v.pos);
+  showBatter(!!v.batter);
   camera.fov = v.fov;
   camera.updateProjectionMatrix();
   controls.target.copy(v.target);
@@ -131,6 +184,7 @@ function setView(name) {
 setView("catcher");
 document.querySelector("#bv-reset").addEventListener("click", () => setView("catcher"));
 document.querySelector("#bv-tv").addEventListener("click", () => setView("tv"));
+document.querySelector("#bv-batter").addEventListener("click", () => setView("batter"));
 // Once you drag, it's no longer one of the fixed views
 controls.addEventListener("start", () => { viewLabel.textContent = "Custom view (drag to rotate)"; });
 
@@ -152,30 +206,25 @@ new ResizeObserver(resize).observe(stage);
 
 // ---------- Pitch paths ----------
 let reps = new Map();      // pitch type → its representative real pitch (with flight path)
-let zoneMid = { x: 0, z: 2.5 };
+let targets = new Map();   // pitch type → where it crosses the plate on average
 let overlay = false;       // overlay mode on/off
 let chosen = [];           // the pitch type (or two types in overlay mode) being shown
 
-// The same throw with no spin: same release point and velocity, but only gravity and the
-// drag along the throw (ay) act on it. Spin is what makes the real path bend away from this.
-function noSpinAt(p, e) {
-  const t0 = p.tRelease, r = pitchAt(p, 0);
-  const v = { x: p.vx0 + p.ax * t0, y: p.vy0 + p.ay * t0, z: p.vz0 + p.az * t0 };
-  return { x: r.x + v.x * e, y: r.y + v.y * e + 0.5 * p.ay * e * e, z: r.z + v.z * e - 0.5 * GRAVITY * e * e };
-}
-
-// For overlay mode: the same real pitch (release point, speed and spin), but thrown so that
-// without spin it would hit the middle of the zone. Both pitches get the same aim, so where
-// they really end up differs only because of their speed and spin.
-function aimedAt(p, target) {
+// The same real pitch (release point, speed and spin), but thrown so that it crosses the plate
+// at target: the average spot where he puts that pitch type. So a pitch type lands in the same
+// spot whether it's shown alone or next to another one, and it matches what you'll see in the game.
+// spin = false gives the no-spin version of that same throw: only gravity and the drag along the
+// throw act on it, so it misses the target by exactly the pitch's break.
+function aimedAt(p, target, spin = true) {
   const r = pitchAt(p, 0), T = p.flightTime;
   const vy = p.vy0 + p.ay * p.tRelease;
-  const vx = (target.x - r.x) / T;                              // no-spin path hits target.x at T
-  const vz = (target.z - r.z + 0.5 * GRAVITY * T * T) / T;      // ...and target.z
+  const vx = (target.x - r.x - 0.5 * p.ax * T * T) / T;         // real (spinning) path hits target.x at T
+  const vz = (target.z - r.z - 0.5 * p.az * T * T) / T;         // ...and target.z
+  const ax = spin ? p.ax : 0, az = spin ? p.az : -GRAVITY;
   return e => ({
-    x: r.x + vx * e + 0.5 * p.ax * e * e,
+    x: r.x + vx * e + 0.5 * ax * e * e,
     y: r.y + vy * e + 0.5 * p.ay * e * e,
-    z: r.z + vz * e + 0.5 * p.az * e * e
+    z: r.z + vz * e + 0.5 * az * e * e
   });
 }
 
@@ -198,7 +247,7 @@ function show() {
     if (!visible) return;
     const p = reps.get(type);
     slot.pitch = p;
-    slot.at = overlay ? aimedAt(p, zoneMid) : (e => pitchAt(p, e));
+    slot.at = aimedAt(p, targets.get(type));
     slot.path.geometry.dispose();
     slot.path.geometry = tube(pathPoints(slot.at, p.flightTime), 0.05);
     slot.pathMat.color.set(color(type));
@@ -212,7 +261,7 @@ function show() {
   noSpinPath.clear();
   if (!overlay) {
     const p = slots[0].pitch;
-    const pts = pathPoints(e => noSpinAt(p, e), p.flightTime);
+    const pts = pathPoints(aimedAt(p, targets.get(chosen[0]), false), p.flightTime);
     for (let i = 0; i + 2 < pts.length; i += 4) noSpinPath.add(new THREE.Mesh(tube(pts.slice(i, i + 3), 0.035), noSpinMat));
   }
 
@@ -225,16 +274,16 @@ function show() {
     const dx = Math.abs(ea.x - eb.x) * 12, dz = Math.abs(ea.z - eb.z) * 12;
     const ms = Math.round(Math.abs(a.pitch.flightTime - b.pitch.flightTime) * 1000);
     const slower = a.pitch.flightTime > b.pitch.flightTime ? chosen[0] : chosen[1];
-    caption.textContent = `${chosen[0]} vs. ${chosen[1]}: aimed at the same spot, they cross the plate ` +
-      `${inch(Math.hypot(dx, dz))} in apart (${inch(dx)} in sideways, ${inch(dz)} in up and down). ` +
-      `The ${slower.toLowerCase()} gets there ${ms} ms later.`;
+    caption.textContent = `${chosen[0]} vs. ${chosen[1]}: where he usually puts them, they cross the plate ` +
+      `${inch(Math.hypot(dx, dz))} in apart (${inch(dx)} in sideways, ${inch(dz)} in up and down), ` +
+      `after leaving his hand on almost the same line. The ${slower.toLowerCase()} gets there ${ms} ms later.`;
     note.textContent = "Overlay: both pitches leave his hand at the same moment, each from its real release point. Pick any two pitch types.";
   } else {
     const p = slots[0].pitch, type = chosen[0];
     const side = p.pfx_x < 0 ? "arm side" : "glove side";   // right-hander, catcher's view
     caption.textContent = `${type}: ${inch(Math.abs(p.pfx_x * 12))} in ${side} and ` +
       `${inch(p.pfx_z * 12)} in induced vertical break (a real pitch close to his average ${type.toLowerCase()}).`;
-    note.textContent = "Solid line: the real pitch. Dashed line: the same throw with no spin.";
+    note.textContent = "Solid line: the pitch, ending where he usually puts it. Dashed line: the same throw with no spin. The gap between them is the break.";
   }
   if (!touchOnly) note.textContent += " Drag to look from any angle.";
   updateSpeedLabel();
@@ -329,13 +378,12 @@ loadPitches().then(({ all }) => {
   for (const [type, list] of byType) {
     const mx = d3.mean(list, d => d.pfx_x), mz = d3.mean(list, d => d.pfx_z);
     reps.set(type, preparePitch(d3.least(list, d => Math.hypot(d.pfx_x - mx, d.pfx_z - mz))));
+    targets.set(type, { x: d3.mean(list, d => d.plate_x), z: d3.mean(list, d => d.plate_z) });
   }
 
   // Strike zone: average top and bottom for the hitters he faced (overlay pitches aim at its middle)
   const top = d3.mean(pool, d => d.sz_top), bot = d3.mean(pool, d => d.sz_bot);
-  zoneMid = { x: 0, z: (top + bot) / 2 };
-  zoneLine.geometry.setFromPoints([S(-0.83, FRONT_OF_PLATE, bot), S(0.83, FRONT_OF_PLATE, bot),
-    S(0.83, FRONT_OF_PLATE, top), S(-0.83, FRONT_OF_PLATE, top)]);
+  buildBatterZone(top, bot);
 
   // One button per pitch type, most thrown first
   const order = d3.sort(byType.keys(), t => -byType.get(t).length);
