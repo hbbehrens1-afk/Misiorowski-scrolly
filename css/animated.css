@@ -1,0 +1,171 @@
+/* animated.css — extra styles for animated.html (loaded after style.css) */
+
+.hero-links a { font-weight: 600; color: var(--accent); }
+
+/* ---------- Intro: photo left, text right (stacked on phones) ---------- */
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 32px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 10vh;
+}
+.intro-photo { margin: 0; }
+.intro-photo img { display: block; width: 100%; height: auto; border-radius: 8px; }
+.intro-photo figcaption { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; }
+.intro-text h2 { margin-top: 0; color: var(--brewers-navy); font-size: 1.8rem; }
+.intro-text p { font-size: 1.05rem; }
+
+@media (max-width: 800px) {
+  .intro { grid-template-columns: 1fr; gap: 16px; }
+  .intro-text h2 { font-size: 1.5rem; }
+}
+
+/* The sticky panel holds the legend, controls, chart and overlays */
+#figure { position: sticky; }
+.viz { flex: 1; min-height: 0; position: relative; }
+.viz svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* ---------- 3D break viewer (inside the movement step) ---------- */
+.break-viewer { margin-top: 12px; }
+.bv-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.bv-picker button {
+  font: inherit; font-size: 0.8rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--card); color: var(--text);
+}
+.bv-picker button[aria-pressed="true"] { border-color: var(--text); font-weight: 700; }
+.bv-picker .dot-key { width: 10px; height: 10px; border-radius: 50%; }
+.bv-stage { position: relative; height: 280px; border-radius: 8px; overflow: hidden; background: #cfe0f1; }
+.bv-stage canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.bv-stage canvas:active { cursor: grabbing; }
+.bv-views { position: absolute; top: 8px; right: 8px; z-index: 1; display: flex; gap: 6px; }
+.bv-reset {
+  font: inherit; font-size: 0.75rem; padding: 4px 8px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 6px; background: rgba(255, 255, 255, 0.9);
+}
+/* Which side you're looking from (bottom-left of the 3D view) */
+.bv-view-label {
+  position: absolute; left: 8px; bottom: 8px; z-index: 1; margin: 0;
+  font-size: 0.75rem; padding: 3px 8px; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.9); pointer-events: none;
+}
+.bv-speed { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 0.85rem; }
+.bv-speed input { flex: 1; }
+.bv-caption { font-size: 0.85rem; margin: 6px 0 0; }
+.bv-note { font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 0; }
+@media (max-width: 800px) { .bv-stage { height: 230px; } }
+
+/* Overlay and full-screen buttons */
+.bv-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.bv-toolbar button {
+  font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--accent); background: var(--card); color: var(--accent);
+}
+.bv-toolbar button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+/* Full screen: the viewer covers the whole window, with the 3D view filling the space */
+.break-viewer.bv-expanded {
+  position: fixed; inset: 0; z-index: 1000;
+  margin: 0; padding: 16px;
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  overflow: auto;
+}
+.bv-expanded .bv-stage { flex: 1; height: auto; min-height: 240px; }
+body.bv-lock { overflow: hidden; }
+
+/* ---------- Pitch-type legend ---------- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  transition: opacity 0.25s;
+}
+.legend-swatch { width: 12px; height: 12px; border-radius: 50%; }
+.metric-toggle[hidden] { display: none; }
+.legend.has-hover .legend-item:not(.hl) { opacity: 0.3; }
+
+/* ---------- Sequential color legend (heatmap, zone grid) ---------- */
+.seq-legend { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; width: 240px; }
+.seq-legend[hidden] { display: none; }
+.seq-legend #seq-label { display: block; font-weight: 600; color: var(--text); }
+.seq-bar {
+  display: block;
+  height: 10px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #cde2fb, #0d366b);
+}
+.seq-ticks { display: flex; justify-content: space-between; }
+
+/* ---------- Chart pieces ---------- */
+.dot { stroke: none; transition: opacity 0.25s; }
+.mark { transition: opacity 0.25s; }
+.anno { transition: opacity 0.25s; }
+.axis { color: var(--text-muted); font-size: 11px; }
+.axis path, .axis line { stroke: #c9c8c3; }
+.axis-label { fill: var(--text-muted); font-size: 12px; }
+.row-label { fill: var(--text); font-size: 12px; }
+.row-label.strong { font-weight: 600; }
+.value-label { fill: var(--text-muted); font-size: 12px; }
+.cell-label { font-size: 11px; pointer-events: none; }
+.facet-label { fill: var(--text); font-size: 13px; font-weight: 600; }
+.overlay { fill: none; pointer-events: all; }
+
+/* Rollover: when a pitch type is hovered, everything else fades back */
+svg.has-hover .dot:not(.hl) { opacity: 0.12; }
+svg.has-hover .mark.pitch:not(.hl) { opacity: 0.25; }
+svg.has-hover .anno.pitch:not(.hl) { opacity: 0.25; }
+
+.hover-ring { fill: none; stroke: var(--text); stroke-width: 1.5; pointer-events: none; transition: opacity 0.15s; }
+
+/* ---------- Tooltip ---------- */
+.tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  min-width: 150px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.tip.show { opacity: 1; transform: translateY(0); }
+.tip-title { display: flex; align-items: center; gap: 6px; font-weight: 700; margin-bottom: 4px; }
+.tip-key { width: 12px; height: 3px; border-radius: 2px; }
+.tip-row { display: flex; justify-content: space-between; gap: 14px; }
+.tip-row span:first-child { color: var(--text-muted); }
+.tip-row span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- Closing tiles ---------- */
+.summary-tiles {
+  position: absolute;
+  inset: 80px 0 auto 0;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.summary-tiles.show { opacity: 1; }
+.summary-tiles[hidden] { display: none; }
+
+@media (max-width: 800px) {
+  .legend { font-size: 0.75rem; gap: 2px 10px; }
+  .summary-tiles { inset: 40px 0 auto 0; }
+}
