@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Face Misiorowski</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body class="game-page">
+  <!-- DRAFT: batting game. Every pitch is a real pitch from savant_data.csv, played back at
+       its real speed from Statcast's physics columns. Drawn in 3D with three.js. -->
+  <header class="game-header">
+    <a href="animated.html" class="back-link">← Back to the story</a>
+    <h1>Face Misiorowski</h1>
+    <p class="game-dek">
+      Each pitch is one he really threw, at its real speed, movement and release point, picked
+      from pitches he threw in the same count. Aim where the ball will cross the plate, then time
+      your swing.
+    </p>
+  </header>
+
+  <main class="game-wrap">
+    <div class="game-stage">
+      <canvas id="field" aria-label="Batting game: 3D view from behind the batter"></canvas>
+
+      <!-- Scoreboard -->
+      <div class="scoreboard" aria-live="polite">
+        <div class="count">
+          <span class="count-label">B</span><span id="balls" class="lights"></span>
+          <span class="count-label">S</span><span id="strikes" class="lights"></span>
+        </div>
+        <div class="stats">
+          <span>Hits <strong id="stat-hits">0</strong></span>
+          <span>HR <strong id="stat-hr">0</strong></span>
+          <span>K <strong id="stat-k">0</strong></span>
+          <span>BB <strong id="stat-bb">0</strong></span>
+          <span>Longest <strong id="stat-long">–</strong></span>
+        </div>
+      </div>
+
+      <!-- Big result text, e.g. "Home run · 412 ft" -->
+      <div id="message" class="message" aria-live="assertive"></div>
+
+      <!-- Start screen -->
+      <div id="start" class="start-card">
+        <h2>Step in the box</h2>
+        <p class="desktop-only">Move the <strong>mouse</strong> to aim the yellow circle where the ball will cross the plate</p>
+        <p class="desktop-only"><strong>Click</strong> (or press <kbd>Space</kbd>) to swing</p>
+        <p class="touch-only">Drag on the field to aim, then tap <strong>Swing</strong></p>
+        <p class="hint">Aim a little under the ball to lift it. Swing early to pull it to left field.</p>
+        <button id="start-btn" type="button">Play ball</button>
+        <p id="loading" class="hint">Loading pitches…</p>
+      </div>
+    </div>
+
+    <!-- What the last pitch was -->
+    <p id="pitch-info" class="pitch-info">Waiting for the first pitch.</p>
+
+    <!-- Touch control for phones -->
+    <div class="touch-controls">
+      <button id="btn-swing" type="button" class="swing">Swing</button>
+    </div>
+  </main>
+
+  <!-- d3 + data.js are shared with the story (loading and pitch colors). three.js draws the 3D field. -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="js/data.js"></script>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>

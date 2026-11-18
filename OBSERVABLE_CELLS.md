@@ -1,20 +1,245 @@
-# Observable cells: Misiorowski by the Pitch
+# Observable notebook: Misiorowski by the Pitch
 
-These cells rebuild every chart from the site in an Observable notebook
-(classic notebook cells, like your original notebook).
+Every chart from the site as an Observable notebook, in story order. Each chart has a
+text cell explaining its visual encodings (mark, channels, color), then the chart itself.
 
-**Setup**
+**How to build the notebook**
 
-1. In the notebook, open the **Files** pane (paperclip icon) and attach `savant_data.csv`.
-2. Add one cell per code block below and paste the code in. Order doesn't matter;
-   Observable figures out which cells depend on which.
-3. Plot, d3, `Inputs` and `width` are built into Observable, so there's nothing to import.
+1. Open your notebook and attach `savant_data.csv` in the **Files** pane (paperclip icon).
+2. Add one cell per code block below, top to bottom, and paste the code in.
+   Text cells start with `md`; they render as formatted text.
+3. Order doesn't matter to Observable (cells can use cells defined further down), so the
+   setup code can live in the Appendix at the bottom while the story reads top to bottom.
+4. Plot, d3, `Inputs`, `md`, `html` and `width` are built in; nothing to import.
 
-The chart functions are the same code as the website (`js/charts.js`). The only
-differences are how the data loads (`FileAttachment` instead of `d3.csv`) and that
-each chart gets a fixed height instead of measuring the page.
+The chart functions are the same code as the website (`js/charts.js`).
 
-## 1. Data
+
+## Title
+
+```js
+md`# Misiorowski by the Pitch
+
+A Statcast look at Milwaukee Brewers pitcher Jacob Misiorowski: what he throws, how hard,
+how it moves, where it goes, and how he puts hitters away. Data: Baseball Savant pitch-by-pitch export.`
+```
+
+## The data
+
+```js
+md`## The data
+
+One row per pitch. The table below shows the raw Baseball Savant export; the cleaning cells in the
+Appendix add strike, swing and whiff flags (1 or 0) and the count to each row.`
+```
+```js
+Inputs.table(data, {columns: ["game_date", "pitch_name", "release_speed", "pfx_x", "pfx_z", "plate_x", "plate_z", "zone", "balls", "strikes", "description"]})
+```
+```js
+// Row counts: all pitches, pitches with a location, pitches with a type and speed
+({all: all.length, located: located.length, typed: typed.length})
+```
+
+## 1. Pitch usage
+
+```js
+md`## 1. Pitch usage
+
+How often he throws each pitch type.
+
+| Encoding | Channel | Data |
+| --- | --- | --- |
+| Mark | horizontal bar (barX) | one bar per pitch type |
+| x position (bar length) | quantitative | number of pitches |
+| y position | nominal | pitch type, in fixed order |
+| Color (hue) | nominal | pitch type (repeats y so colors match later charts) |
+| Text label | quantitative | share of all pitches |
+
+Hover a bar for its count and share.`
+```
+```js
+usageChart(named, {width, height: 360})
+```
+
+## 2. Velocity
+
+```js
+md`## 2. Velocity by pitch type
+
+Every pitch as a thin tick at its release speed, with a circle at each pitch type's average.
+
+| Encoding | Channel | Data |
+| --- | --- | --- |
+| Mark 1 | tick (tickX), one per pitch | release speed |
+| Mark 2 | dot, one per pitch type | average speed |
+| x position | quantitative | release speed (mph) |
+| y position | nominal | pitch type |
+| Color (hue) | nominal | pitch type |
+| Opacity | density | low opacity (0.25) so crowded speeds look darker |
+
+The second chart fades the other pitches (opacity 0.05) and adds a dashed 100 mph reference line.
+Hover a circle for the average, median and range.`
+```
+```js
+veloChart(typed, {width, height: 420})
+```
+```js
+veloChart(typed, {width, height: 420, highlight: "4-Seam Fastball"})
+```
+
+## 3. Movement
+
+```js
+md`## 3. Pitch movement
+
+How far spin pushes each pitch sideways and up or down compared with a spinless pitch, in inches.
+
+| Encoding | Channel | Data |
+| --- | --- | --- |
+| Mark 1 | dot, one per pitch | small and faint (r 2.5, opacity 0.3) |
+| Mark 2 | dot, one per pitch type | average movement, white fill with colored ring |
+| x position | quantitative | horizontal break (pfx_x x 12, catcher's view) |
+| y position | quantitative | induced vertical break (pfx_z x 12) |
+| Color (hue) | nominal | pitch type |
+| Text label | nominal | pitch name next to each average, so color isn't the only cue |
+| Aspect ratio | equal scale | one inch is the same length on both axes |
+
+Reference lines at 0 split rise from sink and arm side from glove side.
+The second chart highlights the fastball and curveball. Hover a circle for breaks and spin rate.`
+```
+```js
+movementChart(typed, {width, height: 700})
+```
+```js
+movementChart(typed, {width, height: 700, highlight: ["4-Seam Fastball", "Curveball"]})
+```
+
+## 4a. Location: the original heatmap
+
+```js
+md`## 4a. Location: the original notebook heatmap
+
+The first prototype, kept for comparison: 0.05 ft squares colored by strike rate.
+
+| Encoding | Channel | Data |
+| --- | --- | --- |
+| Mark | rect, one per 0.05 ft square | 2,266 squares |
+| x / y position | quantitative, binned | plate location (feet) |
+| Color | sequential (Blues), 0 to 1 | strike rate (original strike list) |
+| Red outline | reference | fixed strike zone, 1.5 to 3.5 ft |
+
+Problems: most squares hold 1 or 2 pitches so they show 0% or 100%; balls in play don't count as
+strikes; a square frame stretches a 4 x 5 ft area; and there is no legend.`
+```
+```js
+originalHeatmap(located, {width, height: 650})
+```
+
+## 4b. Location: the fixed heatmap
+
+```js
+md`## 4b. Location: the fixed heatmap
+
+Strike rate or whiff rate by location, with every problem from 4a fixed. Use the controls to filter by pitch type
+and switch the metric.
+
+| Encoding | Channel | Data |
+| --- | --- | --- |
+| Mark | rect, one per 0.25 ft square | squares with 5+ pitches (or 5+ swings for whiff rate) |
+| x / y position | quantitative, binned | plate location (feet, catcher's view) |
+| Color | sequential single-hue blue, fixed 0 to 1 | strike rate or whiff rate (whiffs / swings) |
+| Red outline | reference | strike zone from the data (average sz_top and sz_bot) |
+| Aspect ratio | equal scale | one foot is the same length on both axes |
+| Legend | color ramp | 0% to 100% |
+
+Hover a square for both rates and its pitch and swing counts.`
+```
+```js
+viewof pitchChoice = Inputs.select(["All", ...PITCH_NAMES], {label: "Pitch type"})
+```
+```js
+viewof metric = Inputs.radio(new Map([["Strike rate", "strike"], ["Whiff rate", "whiff"]]), {label: "Metric", value: "strike"})
+```
+```js
+locationHeatmap(located, {width, height: 760, metric, pitchName: pitchChoice})
+```
+
+## 5. Count strategy
+
+```js
+md`## 5. Count strategy
+
+Pitch mix when he is ahead in the count (more strikes than balls), even, or behind, then in all 12 counts.
+
+| Encoding | Channel | Data |
+| --- | --- | --- |
+| Mark | stacked bar (barX + stackX), normalized to 100% | one bar per count group |
+| x position (segment length) | quantitative | share of pitches in that group |
+| y position | ordinal | Ahead / Even / Behind, or count from 0-0 to 3-2 |
+| Color (hue) | nominal | pitch type, stacked in fixed order |
+| Text label | quantitative | share, shown on segments of 8% or more |
+| Row label | quantitative | number of pitches behind each bar |
+
+Hover a segment for its share and pitch count.`
+```
+```js
+countMixChart(named, {width, height: 300})
+```
+```js
+countMixChart(named, {width, height: 500, groupBy: "count"})
+```
+
+## 6. Putting hitters away
+
+```js
+md`## 6. Putting hitters away
+
+Whiff rate with two strikes in each Statcast zone: zones 1 to 9 make up the strike zone and zones 11 to 14
+are the four areas just outside it.
+
+| Encoding | Channel | Data |
+| --- | --- | --- |
+| Mark | rect, one per zone | 13 zones, seen from the catcher |
+| Position | spatial | zone's place in or around the strike zone |
+| Color | sequential single-hue blue, 0 to 1 | whiff rate with two strikes |
+| Gray fill | missing-data cue | fewer than 5 swings |
+| Text label | quantitative | whiff rate and swing count |
+| Facets (fx) | nominal | second chart: one grid each for fastball, slider, curveball |
+
+Hover a zone for its swings, whiffs and location.`
+```
+```js
+zoneWhiffChart(all, {width, height: 640})
+```
+```js
+zoneWhiffChart(all, {width, height: 400, byPitch: true})
+```
+
+## 7. Summary
+
+```js
+md`## 7. Summary
+
+Six headline numbers, one from each section, all computed from the data (see stats in the Appendix).
+These are text tiles rather than a chart: the encoding is the number itself.`
+```
+```js
+summaryTiles(stats)
+```
+
+---
+
+# Appendix: setup code
+
+Everything the charts above depend on.
+```js
+md`---
+# Appendix: setup code
+
+The cells below load and clean the data, define shared helpers, and define one function per chart.`
+```
+
+### Loading and cleaning the data
 
 ```js
 // Load the CSV (typed: true = d3.autoType, turns numbers into numbers)
@@ -140,7 +365,7 @@ function strikeZone(pitches) {
 }
 ```
 
-## 2. Shared chart helpers
+### Shared chart helpers
 
 ```js
 pct = d3.format(".0%")
@@ -213,9 +438,7 @@ function zoneShape(zone) {
 ZONES = [11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9] // outer first so inner draws on top
 ```
 
-## 3. Chart functions
-
-Same code as `js/charts.js` on the site.
+### Chart functions
 
 ```js
 function usageChart(pitches, { width, height }) {
@@ -618,79 +841,7 @@ function summaryTiles(stats) {
 }
 ```
 
-## 4. The charts
-
-Each of these cells displays one chart. `width` is Observable's built-in page width, so charts resize with the notebook.
-
-**Section 1: pitch usage**
-
-```js
-usageChart(named, {width, height: 360})
-```
-**Section 2: velocity**
-
-```js
-veloChart(typed, {width, height: 420})
-```
-**Section 2: velocity, fastball highlighted**
-
-```js
-veloChart(typed, {width, height: 420, highlight: "4-Seam Fastball"})
-```
-**Section 3: movement**
-
-```js
-movementChart(typed, {width, height: 700})
-```
-**Section 3: movement, fastball vs. curveball**
-
-```js
-movementChart(typed, {width, height: 700, highlight: ["4-Seam Fastball", "Curveball"]})
-```
-**Section 4: original notebook heatmap**
-
-```js
-originalHeatmap(located, {width, height: 650})
-```
-**Section 4: pitch-type filter for the fixed heatmap**
-
-```js
-viewof pitchChoice = Inputs.select(["All", ...PITCH_NAMES], {label: "Pitch type"})
-```
-**Section 4: strike rate / whiff rate toggle**
-
-```js
-viewof metric = Inputs.radio(new Map([["Strike rate", "strike"], ["Whiff rate", "whiff"]]), {label: "Metric", value: "strike"})
-```
-**Section 4: fixed heatmap (uses the two controls above)**
-
-```js
-locationHeatmap(located, {width, height: 760, metric, pitchName: pitchChoice})
-```
-**Section 5: pitch mix ahead / even / behind**
-
-```js
-countMixChart(named, {width, height: 300})
-```
-**Section 5: pitch mix in every count**
-
-```js
-countMixChart(named, {width, height: 500, groupBy: "count"})
-```
-**Section 6: two-strike whiff rate by zone**
-
-```js
-zoneWhiffChart(all, {width, height: 640})
-```
-**Section 6: two-strike whiff rate by zone, by pitch**
-
-```js
-zoneWhiffChart(all, {width, height: 400, byPitch: true})
-```
-
-## 5. Story numbers and summary tiles
-
-`stats` holds every number from the story text (e.g. `stats.ffMean`). The tiles need the small style cell to look like the site.
+### Story numbers and tile styles
 
 ```js
 // Team abbreviations we need to spell out in the text
@@ -793,9 +944,6 @@ function computeStats({ all, located, typed }) {
 ```
 ```js
 stats = computeStats({all, located, typed})
-```
-```js
-summaryTiles(stats)
 ```
 ```js
 // Tile styles (copied from css/style.css)

@@ -1,0 +1,105 @@
+/* game.css — styles for game.html (loaded after style.css) */
+
+.game-page { background: #0f1b2d; color: #f0efec; }
+
+.game-header { max-width: 960px; margin: 0 auto; padding: 16px 16px 8px; }
+.game-header h1 { margin: 4px 0; font-size: clamp(1.6rem, 5vw, 2.4rem); }
+.game-dek { margin: 0; color: #c3c2b7; font-size: 0.95rem; }
+.back-link { color: #9ec5f4; font-size: 0.9rem; }
+
+.game-wrap { max-width: 960px; margin: 0 auto; padding: 0 16px 24px; }
+
+.game-stage {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+#field { display: block; width: 100%; height: min(70vh, 620px); touch-action: none; cursor: none; }
+
+.hint { font-size: 0.85rem; color: #9ec5f4 !important; }
+.touch-only { display: none; }
+@media (hover: none) {
+  .touch-only { display: block; }
+  .desktop-only { display: none; }
+}
+
+/* ---------- Scoreboard ---------- */
+.scoreboard {
+  position: absolute;
+  top: 10px; left: 10px;
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  align-items: center;
+  background: rgba(12, 20, 34, 0.85);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+.count { display: flex; align-items: center; gap: 6px; }
+.count-label { font-weight: 700; color: #c3c2b7; }
+.lights { display: inline-flex; gap: 4px; margin-right: 6px; }
+.light { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #6d6c66; }
+.light.on.ball { background: #1baf7a; border-color: #1baf7a; }
+.light.on.strike { background: #eda100; border-color: #eda100; }
+.stats { display: flex; gap: 12px; color: #c3c2b7; }
+.stats strong { color: #fff; font-variant-numeric: tabular-nums; }
+
+/* ---------- Result message ---------- */
+.message {
+  position: absolute;
+  left: 50%; top: 22%;
+  transform: translate(-50%, 8px);
+  font-size: clamp(1.4rem, 5vw, 2.4rem);
+  font-weight: 800;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+}
+.message.show { opacity: 1; transform: translate(-50%, 0); }
+.message small { display: block; font-size: 0.45em; font-weight: 600; opacity: 0.9; }
+
+/* ---------- Start card ---------- */
+.start-card {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(12, 20, 34, 0.92);
+  border-radius: 12px;
+  padding: 18px 24px;
+  text-align: center;
+  max-width: 90%;
+}
+.start-card[hidden] { display: none; }
+.start-card h2 { margin: 0 0 8px; }
+.start-card p { margin: 6px 0; color: #c3c2b7; }
+kbd {
+  display: inline-block; min-width: 1.6em; padding: 1px 6px;
+  border: 1px solid #6d6c66; border-bottom-width: 2px; border-radius: 4px;
+  background: #1a2638; color: #fff; font: inherit; font-size: 0.85em;
+}
+button {
+  font: inherit; font-weight: 700;
+  border: none; border-radius: 8px;
+  padding: 10px 22px; margin-top: 8px;
+  background: #2a78d6; color: #fff; cursor: pointer;
+}
+button:active { transform: translateY(1px); }
+
+.pitch-info { color: #c3c2b7; font-size: 0.9rem; min-height: 2.6em; margin: 10px 0 0; }
+.pitch-info .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.pitch-info strong { color: #fff; }
+
+/* Touch buttons only on touch screens */
+.touch-controls { display: none; gap: 10px; margin-top: 8px; }
+.touch-controls button { flex: 1; margin: 0; font-size: 1.1rem; background: #1a2638; }
+.touch-controls .swing { flex: 2; background: #e34948; }
+@media (hover: none), (max-width: 800px) {
+  .touch-controls { display: flex; }
+}
+@media (max-width: 800px) {
+  #field { height: min(52vh, 110vw); }   /* leave room for the touch buttons */
+  .game-dek { font-size: 0.85rem; }
+}
